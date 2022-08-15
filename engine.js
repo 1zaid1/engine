@@ -162,6 +162,15 @@ function Engine(R, l, cx, cy) {
 let engine, cnv;
 function setup() {
     cnv = createCanvas(700, 700);
+    let canv = document.getElementById(cnv.id());
+    canv.style.left = window.innerWidth/2 - width/2 + "px";
+    dx = window.innerWidth/2 - width/2;
+    canv.style.top = window.innerHeight/2 - height/2 + "px";
+    dx = window.innerHeight/2 - height/2;
+    // canv.style.position = "absolute";
+
+    document.getElementById("dv").style.width = window.innerHeight-100+"px";
+    document.getElementById("dv").style.height = window.innerWidth+"px";
     engine = new Engine(70, 200, width/2, height/2);
 }
 
