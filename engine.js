@@ -1,69 +1,13 @@
-// let v = p5.Vector;
-
-function deez(a, b) {
-  return a.x*b.x + a.y*b.y;
-}
-
-function times(a, b) {
-  return deez(a[0], b[0]) + deez(a[1], b[1]);
-}
-
-function rotCon(L, a, p, beta, dt) {
-  let d = p5.Vector.sub(a.pos, p);
-  let C = deez(d, d)-L*L;
-  let Vi = a.vel;
-  let J = d;
-  let B = beta/dt * C;
-  let M_ef = deez(d, d)/a.m;
-  let lambda = -(deez(J, Vi)+B)/M_ef;
-  let F = p5.Vector.mult(J, lambda);
-  let Vf = p5.Vector.mult(F, 1/a.m);
-  return Vf;
-}
-function distCon(L, a, b, beta, dt) {
-  let d = v.sub(a.pos, b.pos);
-  let C = deez(d, d)-L*L;
-  let Vi = [a.vel, b.vel];
-  let J = [d, v.sub(createVector(0,0), d)];
-  let B = beta/dt * C;
-  let M_ef = deez(d, d)/a.m + deez(d, d)/b.m;
-  let lambda = -(times(J, Vi)+B)/M_ef;
-  let F = [v.mult(J[0], lambda), v.mult(J[1], lambda)];
-  let Vf = [v.mult(F[0], 1/a.m),
-            v.mult(F[1], 1/b.m)];
-  return Vf;
-}
-
-function distCon2(L, a, b, beta, dt) {
-  let d = p5.Vector.sub(a.pos, b.pos);
-  let C = deez(d, d)-L*L;
-  let Vi = [a.vel, b.vel];
-  let J = [createVector(0, d.y), p5.Vector.sub(createVector(0,0), d)];
-  let B = beta/dt * C;
-  let M_ef = deez(d, d)/a.m + deez(d, d)/b.m;
-  let lambda = -(times(J, Vi)+B)/M_ef;
-  let F = [p5.Vector.mult(J[0], lambda), p5.Vector.mult(J[1], lambda)];
-  let Vf = [p5.Vector.mult(F[0], 1/a.m),
-            p5.Vector.mult(F[1], 1/b.m)];
-  return Vf;
-}
-
 function Piston(x, y, r, l, w=150, h=150) {
     this.r = r;
     this.l = l;
     this.y0 = y;
 
     this.pos = createVector(x, y);
-    this.vel = createVector(0, 0);
-    this.a = createVector(0, 0);
-    this.m = 1;
 
-    this.force = function(f) {this.a.add(f);}
-    this.update = function(dt) {
-        this.pos.add(p5.Vector.mult(this.vel, dt));
-        this.vel.add(p5.Vector.mult(this.a, dt));
-
-        this.a = createVector(0, 0);
+    this.H = function(ang) {return this.l+this.r*(1-cos(ang)) - sqrt(this.l**2 - (this.r*sin(ang))**2);}
+    this.update = function(ang) {
+        this.pos.y = this.y0 + this.H(ang);
     }
 
     this.draw = function(shaft) {
@@ -107,16 +51,11 @@ function Shaft(x, y, r, speed=0.1) {
     this.angle = 0;
 
     this.pos = createVector(this.center.x, this.center.y - this.r);
-    this.vel = createVector(10, 0);
-    this.a = createVector(0, 0);
-    this.m = 1;
 
     this.force = function(f) {this.a.add(f);}
     this.update = function(dt) {
-        this.pos.add(p5.Vector.mult(this.vel, dt));
-        this.vel.add(p5.Vector.mult(this.a, dt));
-
-        this.a = createVector(0, 0);
+        this.angle += this.speed;
+        this.pos = p5.Vector.add(this.center, createVector(-this.r*sin(this.angle), -this.r*cos(this.angle)));
     }
 
     this.draw = function() {
@@ -134,23 +73,8 @@ function Engine(R, l, cx, cy) {
     this.piston = new Piston(cx, cy-(l+2*R)/2, R, l);
 
     this.update = function(dt) {
-        let n = 100;
-        dt /= n;
-        this.shaft.a.mult(n);
-        this.piston.a.mult(n);
-        for (let i = 0; i < n; i++) {
-            // rotation constraints
-            let dV = rotCon(this.shaft.r, this.shaft, this.shaft.center, 1, dt);
-            this.shaft.vel.add(dV);
-
-            // distance constaints
-            dV = distCon2(this.piston.l+this.piston.r, this.piston, this.shaft, 1, dt);
-            this.piston.vel.add(dV[0]);
-            this.shaft.vel.add(dV[1]);
-
-            this.piston.update(dt);
-            this.shaft.update(dt);
-        }
+        this.shaft.update(dt);
+        this.piston.update(this.shaft.angle);
     }
 
     this.draw = function() {
@@ -174,7 +98,6 @@ function setup() {
     engine = new Engine(70, 200, width/2, height/2);
 }
 
-let count
 function draw() {
     background(300);
     engine.update(1);
