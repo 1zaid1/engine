@@ -107,7 +107,7 @@ function Shaft(x, y, r, speed=0.1) {
     this.angle = 0;
 
     this.pos = createVector(this.center.x, this.center.y - this.r);
-    this.vel = createVector(5, 0);
+    this.vel = createVector(10, 0);
     this.a = createVector(0, 0);
     this.m = 1;
 
